@@ -1,0 +1,611 @@
+﻿#include<fstream>
+#include<iostream>
+#include<string.h>
+#include<stdlib.h>
+#include<conio.h>
+
+
+using namespace std;
+
+
+class flight
+{
+    int fltno;      //  flight number
+    char from[25];  //  source
+    char to[25];    //  destination
+    long fare;      //  fare
+public:
+    // Asks the user to give input
+    int input();
+    void output();
+    int getFltno();
+    char * getFrom();
+    char * getTo();
+    long getFare();
+    void setFare(long newfare);
+};
+
+
+// non-member functions
+int login();            //  controls the login
+void menu();            //  controls the menu
+void add();             //  Add a record
+int isUnique(int fno);  //  Check if a flight no. is unique
+void modify();          //  Modify a record
+void del();             //  Delete a record
+void display();         //  Display all records
+void search_fltno();    //  Search on the basis of flight number
+void search_source();   //  Search on the basis of source
+void search_dest();     //  Search on the basis of destination
+void search_srcdest();  //  Search on the basis of source and destination
+void byebye();          //  Display a message upon exit from project
+
+
+// main function
+int main()
+{
+    if (login())
+    {
+        menu();
+        byebye();
+    }
+    else
+        cout << "\n\nInvalid user";
+}
+
+
+// Asks the user to give input
+int flight::input()
+{
+    cout << "\nEnter flight number: ";
+    cin >> fltno;
+
+
+    int flag = isUnique(fltno);
+
+
+    if (!flag)
+    {
+        cout << "\nEnter source: ";
+        cin >> from;
+        cout << "\nEnter destination: ";
+        cin >> to;
+        cout << "\nEnter Fare (Rs): ";
+        cin >> fare;
+    }
+
+
+    return flag;
+}
+//  Display the data of an object
+void flight::output()
+{
+    cout << "\nFlight No: " << fltno;
+    cout << "\nSource: " << from;
+    cout << "\nDestination: " << to;
+    cout << "\nFare (Rs): " <<  fare << endl;
+}
+//  Returns flight number
+int flight::getFltno()
+{
+    return fltno;
+}
+//  Returns source
+char * flight::getFrom()
+{
+    return from;
+}
+//  Returns destination
+char * flight::getTo()
+{
+    return to;
+}
+//  Returns fare
+long flight::getFare()
+{
+    return fare;
+}
+//  Allows to change the value of fare
+void flight::setFare(long newfare)
+{
+    fare = newfare;
+}
+//  Controls the main menu
+void menu()
+{
+    int choice;
+
+
+    do
+    {
+//        clrscr();
+        system("cls");
+        cout<<"\nMain Menu";
+        cout<<"\n=========";
+        cout<<"\n1. Add a record";
+        cout<<"\n2. Modify a record";
+        cout<<"\n3. Delete a record";
+        cout<<"\n4. Display all records";
+        cout<<"\n5. Search - flight number";
+        cout<<"\n6. Search - source";
+        cout<<"\n7. Search - destination";
+        cout<<"\n8. Search - source and destination";
+        cout<<"\n0. Exit";
+
+
+        cout<<"\n\nEnter choice [0-8]: ";
+        cin>>choice;
+
+
+        switch(choice)
+        {
+            case 1: add(); break;
+            case 2: modify(); break;
+            case 3: del(); break;
+            case 4: display(); break;
+            case 5: search_fltno(); break;
+            case 6: search_source(); break;
+            case 7: search_dest(); break;
+            case 8: search_srcdest(); break;
+            case 0: break;
+            default: cout<<"\n\nInvalid choice\n\n"; getch();
+        }
+    } while (choice!=0);
+}
+
+
+void add()
+{
+    system("cls");
+    ofstream f("flt.dat", ios::binary | ios::app);
+
+
+    if (!f)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+    char choice, option;
+
+
+    cout<<"\nRECORD ADDITION SCREEN";
+    cout<<"\n======================\n";
+
+
+    do
+    {
+        int flag = t.input();
+
+
+        if (flag)
+        {
+            cout<<"\n\nDuplicate flight numbers NOT allowed";
+            cout<<"\nPress any key to continue...";
+            getch();
+        }
+        else
+        {
+            cout<<"\n\nWant to save (y/n): ";
+            cin>>option;
+
+
+            if (option=='y' || option=='Y')
+            {
+                f.write((char *)&t, sizeof(t));
+                cout<<"\n\nRecord has been saved successfully.";
+            }
+        }
+
+
+        cout<<"\n\nWant to enter next (y/n): ";
+        cin>>choice;
+    } while(choice=='y'||choice=='y');
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+    f.close();
+}
+void modify()
+{
+    //  using two files
+
+
+    system("cls");
+
+
+    ifstream f1 ("flt.dat", ios::binary);
+    ofstream f2 ("temp.dat", ios::binary);
+
+
+    if (!f1 || !f2)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+
+
+    cout<<"\nRECORD MODIFICATION SCREEN";
+    cout<<"\n==========================\n";
+
+
+    int fno, flag=0;
+    cout<<"\nEnter flight number to modify: ";
+    cin>>fno;
+
+
+    while (f1.read((char *)&t, sizeof(t)))
+    {
+        if (t.getFltno()==fno)
+        {
+            flag=1;
+            t.output();
+            int newfare;
+            cout<<"\n\nEnter new fare: ";
+            cin>>newfare;
+            t.setFare(newfare);
+        }
+        f2.write((char *)&t, sizeof(t));
+    }
+
+
+    f1.close();
+    f2.close();
+
+
+    remove("flt.dat");
+    rename("temp.dat","flt.dat");
+
+
+    if (flag==1)
+        cout<<"\n\nRecord modified successfully";
+    else
+        cout<<"\n\nInvalid Flight Number : " <<fno;
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+}
+void del()
+{
+    system("cls");
+
+
+    ifstream f1 ("flt.dat", ios::binary);
+    ofstream f2 ("temp.dat", ios::binary);
+
+
+    if (!f1 || !f2)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+
+
+    cout<<"\nRECORD DELETION SCREEN";
+    cout<<"\n======================\n";
+
+
+    int fno, flag=0;
+    cout<<"\nEnter flight number to delete: ";
+    cin>>fno;
+
+
+    while (f1.read((char *)&t, sizeof(t)))
+    {
+        if (t.getFltno()!=fno)
+        {
+            f2.write((char *)&t, sizeof(t));
+        }
+        else
+        {
+            flag=1;
+            t.output();
+        }
+    }
+
+
+    f1.close();
+    f2.close();
+
+
+    remove("flt.dat");
+    rename("temp.dat","flt.dat");
+
+
+    if (flag==1)
+        cout<<"\n\nRecord deleted successfully";
+    else
+        cout<<"\n\nInvalid Flight Number : " <<fno;
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+}
+void display()
+{
+    system("cls");
+    ifstream f("flt.dat", ios::binary);
+
+
+    if (!f)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+
+
+    cout<<"\nRECORD DISPLAY SCREEN";
+    cout<<"\n=====================\n";
+
+
+    while (f.read((char *)&t, sizeof(t)))
+    {
+        t.output();
+    }
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+    f.close();
+}
+void search_fltno()
+{
+    system("cls");
+    ifstream f("flt.dat", ios::binary);
+
+
+    if (!f)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+
+
+    cout<<"\nRECORD SEARCH SCREEN";
+    cout<<"\n====================\n";
+
+
+    int fno, flag=0;
+    cout<<"\nEnter flight number: ";
+    cin>>fno;
+
+
+    while (f.read((char *)&t, sizeof(t)))
+    {
+        if (t.getFltno()==fno)
+        {
+            flag=1;
+            break;
+        }
+    }
+
+
+    if (flag==1)
+        t.output();
+    else
+        cout<<"\n\nInvalid Flight Number : " <<fno;
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+    f.close();
+}
+void search_source()
+{
+    system("cls");
+    ifstream f("flt.dat", ios::binary);
+
+
+    if (!f)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+
+
+    cout<<"\nRECORD SEARCH SCREEN";
+    cout<<"\n====================\n";
+
+
+    int flag=0;
+    char src[15];
+    cout<<"\nEnter Source : ";
+    cin>>src;
+
+
+    while (f.read((char *)&t, sizeof(t)))
+    {
+        if (strcmpi(t.getFrom(),src)==0)
+        {
+            flag=1;
+            t.output();
+        }
+    }
+
+
+    if (flag==0)
+        cout<<"\n\nInvalid Source : " <<src;
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+    f.close();
+}
+void search_dest()
+{
+    system("cls");
+    ifstream f("flt.dat", ios::binary);
+
+
+    if (!f)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+
+
+    cout<<"\nRECORD SEARCH SCREEN";
+    cout<<"\n====================\n";
+
+
+    int flag=0;
+    char dest[15];
+    cout<<"\nEnter Destination: ";
+    cin>>dest;
+
+
+    while (f.read((char *)&t, sizeof(t)))
+    {
+        if (strcmpi(t.getTo(),dest)==0)
+        {
+            flag=1;
+            t.output();
+        }
+    }
+
+
+    if (flag==0)
+        cout<<"\n\nInvalid Destination : " <<dest;
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+    f.close();
+}
+void search_srcdest()
+{
+    system("cls");
+    ifstream f("flt.dat", ios::binary);
+
+
+    if (!f)
+    {
+        cout<<"\n\nFile not opened";
+        return;
+    }
+
+
+    flight t;
+
+
+    cout<<"\nRECORD SEARCH SCREEN";
+    cout<<"\n====================\n";
+
+
+    int flag=0;
+    char src[15], dest[15];
+
+
+    cout<<"\nEnter Source: ";
+    cin>>src;
+
+
+    cout<<"\nEnter Destination: ";
+    cin>>dest;
+
+
+    while (f.read((char *)&t, sizeof(t)))
+    {
+        if (strcmpi(t.getFrom(),src)==0 && strcmpi(t.getTo(),dest)==0)
+        {
+            flag=1;
+            t.output();
+        }
+    }
+
+
+    if (flag==0)
+        cout<<"\n\nInvalid Source / Destination: " <<src<< " / "<<dest;
+
+
+    cout<<"\n\nPress any key to continue.....";
+    getch();
+    f.close();
+}
+
+
+int isUnique(int fno)
+{
+    ifstream f("flt.dat", ios::binary);
+
+
+    flight t;
+
+
+    int flag=0;
+
+
+    while (f.read((char *)&t, sizeof(t)))
+    {
+        if (t.getFltno()==fno)
+        {
+            flag=1;
+            break;
+        }
+    }
+
+
+    f.close();
+
+
+    return flag;
+}
+// This function controls the access to project through a password
+int login()
+{
+    char ch, str[25];
+    int i=0;
+    cout<<"\n\nEnter password: ";
+    while(1)
+    {
+        ch=getch();
+        cout<<"*";
+        if (ch=='\r')
+        {
+            break;
+        }
+        str[i]=ch;
+        i++;
+    }
+    str[i]='\0';
+
+
+    if (strcmp(str,"flight")==0)
+        return 1;
+    else
+        return 0;
+}
+// This function displays a message while exiting from the project
+void byebye()
+{
+    cout<<"\n\nThanks for using my software\n\n";
+}
+
+
+/*
+Pending
+1. delete / modify -
+        ask for save
+*/
